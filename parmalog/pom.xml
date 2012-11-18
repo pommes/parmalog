@@ -1,0 +1,128 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>de.tyranus</groupId>
+	<artifactId>parmalog</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>jar</packaging>
+
+	<name>parmalog</name>
+	<url>http://maven.apache.org</url>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<!-- Versions -->
+		<version-org.slf4j>1.6.2</version-org.slf4j>
+		<version-guava>r09</version-guava>
+		<version-org.springframework>3.1.2.RELEASE</version-org.springframework>
+		<version-junit>4.11</version-junit>
+	</properties>
+
+	<developers>
+		<developer>
+			<id>tim</id>
+			<name>Tim Pommerening</name>
+			<email>tim@tyranus.de</email>
+		</developer>
+	</developers>
+
+	<dependencies>
+		<!-- guava: String Operationen -->
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>${version-guava}</version>
+		</dependency>
+
+		<!-- Logging -->
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-log4j12</artifactId>
+			<version>${version-org.slf4j}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>log4j-over-slf4j</artifactId>
+			<version>${version-org.slf4j}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>jcl-over-slf4j</artifactId>
+			<version>${version-org.slf4j}</version>
+		</dependency>
+
+		<!-- Spring -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-context</artifactId>
+			<version>${version-org.springframework}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>commons-logging</groupId>
+					<artifactId>commons-logging</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-core</artifactId>
+			<version>${version-org.springframework}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>commons-logging</groupId>
+					<artifactId>commons-logging</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-beans</artifactId>
+			<version>${version-org.springframework}</version>
+		</dependency>
+		<!-- <dependency> <groupId>org.springframework</groupId> <artifactId>spring-tx</artifactId> 
+			<version>${version-org.springframework}</version> </dependency> <dependency> 
+			<groupId>org.springframework</groupId> <artifactId>spring-orm</artifactId> 
+			<version>${version-org.springframework}</version> </dependency> <dependency> 
+			<groupId>org.springframework</groupId> <artifactId>spring-asm</artifactId> 
+			<version>${version-org.springframework}</version> </dependency> <dependency> 
+			<groupId>org.springframework</groupId> <artifactId>spring-expression</artifactId> 
+			<version>${version-org.springframework}</version> </dependency> <dependency> 
+			<groupId>org.springframework</groupId> <artifactId>spring-aop</artifactId> 
+			<version>${version-org.springframework}</version> </dependency> <dependency> 
+			<groupId>org.springframework</groupId> <artifactId>spring-jdbc</artifactId> 
+			<version>${version-org.springframework}</version> </dependency> -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-test</artifactId>
+			<version>${version-org.springframework}</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- Spring Config annotations -->
+		<dependency>
+			<groupId>cglib</groupId>
+			<artifactId>cglib</artifactId>
+			<version>2.2.2</version>
+		</dependency>
+		<dependency>
+			<groupId>aopalliance</groupId>
+			<artifactId>aopalliance</artifactId>
+			<version>1.0</version>
+		</dependency>
+		<!-- 
+		<dependency>
+			<groupId>dom4j</groupId>
+			<artifactId>dom4j</artifactId>
+			<version>1.6.1</version>
+		</dependency>
+		 -->
+
+		<!-- Tests -->
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>${version-junit}</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+</project>
