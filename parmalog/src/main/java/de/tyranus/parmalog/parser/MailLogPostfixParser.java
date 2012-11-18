@@ -43,21 +43,26 @@ public class MailLogPostfixParser implements MailLogParser {
 	public MailLogTokens parse(List<ParseFilter> filters) {
 		String lastLine = "";
 		final MailLogTokens tokens = new MailLogTokens();
+
+		// Go through the file line by line
 		try {
 			while (mailLogSource.logReader().ready()) {
 				final String line = mailLogSource.logReader().readLine();
 
+				// The first part is always the same. This is the head.
 				final MailLogToken token = parseHead(line);
-				parseBody(token);
-				tokens.add(token);
 
+				// The second part differs. This is the body.
+				parseBody(token);
+
+				// Add the token for the line to the token list.
+				tokens.add(token);
 				lastLine = line;
 			}
 		}
 		catch (IOException e) {
 			throw ParmalogException.createParse(e, lastLine);
 		}
-
 		return tokens;
 	}
 
@@ -70,7 +75,7 @@ public class MailLogPostfixParser implements MailLogParser {
 			parseBodyPostfixSmtpd(token);
 			break;
 		default:
-			LOGGER.debug("UNSUPPORTED BODY KIND: {}", token.getBodyKind());
+			LOGGER.debug("Unsupported body kind: {}. Ignoring.", token.getBodyKind());
 		}
 		return token;
 	}
@@ -92,7 +97,7 @@ public class MailLogPostfixParser implements MailLogParser {
 			parseNoQueueEvent(token);
 			break;
 		default:
-			LOGGER.debug("UNSUPPORTED EVENT KIND: {}", body.getEventKind());
+			LOGGER.debug("Unsupported event kind: {}. Ignoring", body.getEventKind());
 		}
 
 		return token;
@@ -116,7 +121,7 @@ public class MailLogPostfixParser implements MailLogParser {
 			break;
 		default:
 			event.setReason(Reason.Unsupported);
-			LOGGER.debug("UNSUPPORTED REASON: {}", strLine);
+			LOGGER.debug("Unsupported reason: {}. Ignoring", strLine);
 		}
 
 		// RejectReason
@@ -128,7 +133,7 @@ public class MailLogPostfixParser implements MailLogParser {
 		}
 		else {
 			event.setRejectReason(RejectReason.Unsupported);
-			LOGGER.debug("UNSUPPORTED REJECT REASON: {}", strLine);
+			LOGGER.debug("Unsupported reject reason: {}. Ignoring", strLine);
 		}
 
 		// From
@@ -179,7 +184,7 @@ public class MailLogPostfixParser implements MailLogParser {
 			break;
 		default:
 			token.setBodyKind(BodyKind.Unsupported);
-			LOGGER.debug("UNSUPPORTED BODY KIND: {}", strDaemon);
+			LOGGER.debug("Unsupported body kind: {}. Ignoring", strDaemon);
 			return token;
 		}
 

@@ -30,22 +30,6 @@ public class NoQueueEvent extends TAbstractDataKey implements PostfixSmtpdTokenB
 		return get(Reason.class, key());
 	}
 
-	public void setRcptClientName(String value) {
-		setStringValue(key(), value);
-	}
-
-	public String getRcptClientName() {
-		return getStringValue(key());
-	}
-
-	public void setRcptClientIp(String value) {
-		setStringValue(key(), value);
-	}
-
-	public String getRcptClientIp() {
-		return getStringValue(key());
-	}
-
 	public void setRejectReason(RejectReason value) {
 		set(key(), value);
 	}
