@@ -49,14 +49,12 @@ public class MailLogGreylistAnalyzer implements MailLogAnalyzer {
 				if (body.getEventKind() == EventKind.NoQueue) {
 					final NoQueueEvent event = body.getEvent(NoQueueEvent.class);
 					// and if they are Rejected because of Greylisting
-					if (event.getReason() == Reason.Reject
-							&& event.getRejectReason() == RejectReason.Greylisted) {
+					if (event.getReason() == Reason.Reject && event.getRejectReason() == RejectReason.Greylisted) {
 
 						// Zeige alle Greylist-Einträge, bei denen nicht später Einträge kommen, die
 						// durchgehen.
 						if (!fromToList.contains(event.getFrom() + event.getTo())
-								&& !isPassEntryAfter(token.getTimestamp(), event.getFrom(),
-										event.getTo(), tokens)) {
+								&& !isPassEntryAfter(token.getTimestamp(), event.getFrom(), event.getTo(), tokens)) {
 							LOGGER.info("Greylistet FROM={}, TO={}", event.getFrom(), event.getTo());
 							fromToList.add(event.getFrom() + event.getTo());
 						}
@@ -78,8 +76,7 @@ public class MailLogGreylistAnalyzer implements MailLogAnalyzer {
 	private boolean isPassEntryAfter(Date timestamp, String from, String to, MailLogTokens tokens) {
 		for (MailLogToken token : tokens) {
 			if (token.getTimestamp().compareTo(timestamp) > 0
-					&& token.getRawData().contains(from + "> -> <" + to + ">")
-					&& token.getRawData().contains("amavis")
+					&& token.getRawData().contains(from + "> -> <" + to + ">") && token.getRawData().contains("amavis")
 					&& token.getRawData().contains("Passed")) {
 				return true;
 			}

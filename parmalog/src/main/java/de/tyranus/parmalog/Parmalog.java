@@ -31,8 +31,7 @@ public class Parmalog {
 
 		int reason = 0;
 		try {
-			final ApplicationContext context = new AnnotationConfigApplicationContext(
-					ParmalogConfig.class);
+			final ApplicationContext context = new AnnotationConfigApplicationContext(ParmalogConfig.class);
 			context.getBean(Parmalog.class).start();
 		}
 		catch (ParmalogException | BeanCreationException e) {

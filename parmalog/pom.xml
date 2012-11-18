@@ -13,6 +13,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<!-- Versions -->
+		<version-de.tyranus.framework>0.0.1-SNAPSHOT</version-de.tyranus.framework>
 		<version-org.slf4j>1.6.2</version-org.slf4j>
 		<version-guava>r09</version-guava>
 		<version-org.springframework>3.1.2.RELEASE</version-org.springframework>
@@ -28,6 +29,12 @@
 	</developers>
 
 	<dependencies>
+		<dependency>
+			<groupId>de.tyranus.framework</groupId>
+			<artifactId>framework-data</artifactId>
+			<version>${version-de.tyranus.framework}</version>
+		</dependency>
+
 		<!-- guava: String Operationen -->
 		<dependency>
 			<groupId>com.google.guava</groupId>
@@ -109,13 +116,8 @@
 			<artifactId>aopalliance</artifactId>
 			<version>1.0</version>
 		</dependency>
-		<!-- 
-		<dependency>
-			<groupId>dom4j</groupId>
-			<artifactId>dom4j</artifactId>
-			<version>1.6.1</version>
-		</dependency>
-		 -->
+		<!-- <dependency> <groupId>dom4j</groupId> <artifactId>dom4j</artifactId> 
+			<version>1.6.1</version> </dependency> -->
 
 		<!-- Tests -->
 		<dependency>

@@ -8,7 +8,7 @@ package de.tyranus.parmalog.token.postfix;
 
 /**
  * @author tim
- *
+ * 
  */
 public interface PostfixSmtpdTokenBodyEvent {
 
