@@ -39,18 +39,18 @@ public class NoQueueEvent extends TAbstractDataKey implements PostfixSmtpdTokenB
 	}
 
 	public void setFrom(String value) {
-		setStringValue(key(), value);
+		setString(key(), value);
 	}
 
 	public String getFrom() {
-		return getStringValue(key());
+		return getString(key());
 	}
 
 	public void setTo(String value) {
-		setStringValue(key(), value);
+		setString(key(), value);
 	}
 
 	public String getTo() {
-		return getStringValue(key());
+		return getString(key());
 	}
 }

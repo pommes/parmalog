@@ -20,11 +20,11 @@ public class MailLogToken extends TAbstractDataKey {
 	}
 
 	public void setRawData(String value) {
-		setStringValue(key(), value);
+		setString(key(), value);
 	}
 
 	public String getRawData() {
-		return getStringValue(key());
+		return getString(key());
 	}
 
 	public void setTimestamp(Date value) {
@@ -40,7 +40,7 @@ public class MailLogToken extends TAbstractDataKey {
 	}
 
 	public String getHostname() {
-		return getStringValue(key());
+		return getString(key());
 	}
 
 	public void setProcessId(int value) {
@@ -48,7 +48,7 @@ public class MailLogToken extends TAbstractDataKey {
 	}
 
 	public int getProcessId() {
-		return getIntValue(key());
+		return getInt(key());
 	}
 
 	public void setBodyType(Class<? extends MailLogTokenBody> value) {
