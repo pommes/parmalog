@@ -1,6 +1,9 @@
 package de.tyranus.poseries.gui;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Set;
 
 import org.eclipse.swt.SWT;
@@ -13,9 +16,8 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.ExpandBar;
-import org.eclipse.swt.widgets.ExpandItem;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.ProgressBar;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.wb.swt.SWTResourceManager;
@@ -23,18 +25,35 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tyranus.poseries.usecase.PostProcessMode;
+import de.tyranus.poseries.usecase.ProgressObservable;
 import de.tyranus.poseries.usecase.UseCaseService;
 import de.tyranus.poseries.usecase.UseCaseServiceException;
 
-public class MainWindow {
+public class MainWindow implements Observer {
 	private static final Logger LOGGER = LoggerFactory.getLogger(MainWindow.class);
 
 	@Autowired
 	private UseCaseService useCaseService;
 
-	protected Shell shell;
+	private Display display;
+	private Shell shell;
 	private Text txtSrcDir;
 	private Text txtDstDir;
+	private Button btnSrcSelect;
+	private Label lblSourceDirectory;
+	private Label lblDestinationDirecory;
+	private Button btnDstSelect;
+	private Combo cmbFilePattern;
+	private Label lblNewLabel;
+	private Button btnRefresh;
+	private Combo cmbSrcPattern;
+	private Label lblSourceDirectoryPattern;
+	private StyledText txtFiles;
+	private Button btnPostProcess;
+	private ProgressBar progressBar;
+
+	private Set<Path> filesToProcess;
 
 	/**
 	 * Launch the application.
@@ -55,7 +74,7 @@ public class MainWindow {
 	 * Open the window.
 	 */
 	public void open() {
-		Display display = Display.getDefault();
+		display = Display.getDefault();
 		createContents();
 		shell.open();
 		shell.layout();
@@ -71,14 +90,15 @@ public class MainWindow {
 	 */
 	protected void createContents() {
 		shell = new Shell();
-		shell.setSize(459, 403);
+		shell.setSize(417, 464);
 		shell.setText("PoSeries - Series Post Download");
 
-		final Combo cmbFilePattern = new Combo(shell, SWT.NONE);
+		cmbFilePattern = new Combo(shell, SWT.NONE);
+		cmbFilePattern.setEnabled(false);
 		cmbFilePattern.setItems(new String[] { "*avi,*mp4" });
 		cmbFilePattern.setBounds(145, 68, 159, 23);
 
-		final Label lblNewLabel = new Label(shell, SWT.NONE);
+		lblNewLabel = new Label(shell, SWT.NONE);
 		lblNewLabel.setAlignment(SWT.RIGHT);
 		lblNewLabel.setBounds(10, 71, 129, 15);
 		lblNewLabel.setText("Filename pattern");
@@ -87,141 +107,289 @@ public class MainWindow {
 		txtSrcDir.addMouseTrackListener(new MouseTrackAdapter() {
 			@Override
 			public void mouseHover(MouseEvent e) {
-				LOGGER.debug("txtSrcDir mouse hover.");
 				txtSrcDir.setToolTipText(txtSrcDir.getText());
 			}
 		});
 		txtSrcDir.setBounds(145, 12, 159, 21);
 
-		final Button btnSrcSelect = new Button(shell, SWT.NONE);
-		btnSrcSelect.setBounds(310, 10, 120, 25);
-		btnSrcSelect.setText("Chose directory...");
+		btnSrcSelect = new Button(shell, SWT.NONE);
+		btnSrcSelect.setBounds(310, 10, 82, 25);
+		btnSrcSelect.setText("Chose...");
 
-		final Label lblSourceDirectory = new Label(shell, SWT.NONE);
+		lblSourceDirectory = new Label(shell, SWT.NONE);
 		lblSourceDirectory.setAlignment(SWT.RIGHT);
 		lblSourceDirectory.setBounds(10, 15, 129, 15);
 		lblSourceDirectory.setText("Source directory");
 
 		txtDstDir = new Text(shell, SWT.BORDER);
+		txtDstDir.setEnabled(false);
 		txtDstDir.addMouseTrackListener(new MouseTrackAdapter() {
 			@Override
 			public void mouseHover(MouseEvent e) {
-				LOGGER.debug("txtDstDir mouse hover.");
 				txtDstDir.setToolTipText(txtDstDir.getText());
 			}
 		});
-		txtDstDir.setBounds(145, 97, 159, 21);
+		txtDstDir.setBounds(145, 344, 159, 21);
 
-		final Label lblDestinationDirecory = new Label(shell, SWT.NONE);
+		lblDestinationDirecory = new Label(shell, SWT.NONE);
 		lblDestinationDirecory.setAlignment(SWT.RIGHT);
-		lblDestinationDirecory.setBounds(10, 100, 129, 15);
+		lblDestinationDirecory.setBounds(10, 347, 129, 15);
 		lblDestinationDirecory.setText("Destination direcory");
 
-		final Button btnDstSelect = new Button(shell, SWT.NONE);
+		btnDstSelect = new Button(shell, SWT.NONE);
+		btnDstSelect.setEnabled(false);
 		btnDstSelect.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				LOGGER.debug("btnSrcSelect klicked.");
-				DirectoryDialog dlg = new DirectoryDialog(shell);
-
-				// Set the initial filter path according
-				// to anything they've selected or typed in
-				dlg.setFilterPath(txtDstDir.getText());
-
-				// Change the title bar text
-				dlg.setText("SWT's DirectoryDialog");
-
-				// Customizable message displayed in the dialog
-				dlg.setMessage("Select a directory");
-
-				// Calling open() will open and run the dialog.
-				// It will return the selected directory, or
-				// null if user cancels
-				String dir = dlg.open();
-				if (dir != null) {
-					// Set the text box to the new selection
-					txtDstDir.setText(dir);
-				}
+				selectDestination();
 			}
 		});
-		btnDstSelect.setBounds(310, 95, 120, 25);
-		btnDstSelect.setText("Chose directory...");
+		btnDstSelect.setBounds(310, 342, 82, 25);
+		btnDstSelect.setText("Chose...");
 
-		final Button btnPostProcessSeries = new Button(shell, SWT.NONE);
-		btnPostProcessSeries.setBounds(154, 133, 150, 25);
-		btnPostProcessSeries.setText("Post process series");
+		btnRefresh = new Button(shell, SWT.NONE);
+		btnRefresh.setEnabled(false);
+		btnRefresh.setBounds(10, 100, 382, 25);
+		btnRefresh.setText("Refresh");
 
-		final Combo cmbSrcPattern = new Combo(shell, SWT.NONE);
+		cmbSrcPattern = new Combo(shell, SWT.NONE);
+		cmbSrcPattern.setEnabled(false);
 		cmbSrcPattern.setBounds(145, 39, 159, 23);
 
-		final Label lblSourceDirectoryPattern = new Label(shell, SWT.NONE);
+		lblSourceDirectoryPattern = new Label(shell, SWT.NONE);
 		lblSourceDirectoryPattern.setAlignment(SWT.RIGHT);
 		lblSourceDirectoryPattern.setBounds(10, 42, 129, 15);
 		lblSourceDirectoryPattern.setText("Source directory pattern");
-		
-		ExpandBar expandBar = new ExpandBar(shell, SWT.NONE);
-		expandBar.setBounds(10, 164, 420, 32);
-		
-		ExpandItem xpndtmSelectedFiles = new ExpandItem(expandBar, SWT.NONE);
-		xpndtmSelectedFiles.setText("Selected Files");
-		
-		final StyledText txtFiles = new StyledText(expandBar, SWT.BORDER);
-		txtFiles.setFont(SWTResourceManager.getFont("Segoe UI Semibold", 10, SWT.NORMAL));
+
+		txtFiles = new StyledText(shell, SWT.BORDER | SWT.V_SCROLL);
+		txtFiles.setFont(SWTResourceManager.getFont("Segoe UI", 10, SWT.NORMAL));
+		txtFiles.setDoubleClickEnabled(false);
 		txtFiles.setEditable(false);
-		xpndtmSelectedFiles.setControl(txtFiles);
-		xpndtmSelectedFiles.setHeight(150);
+		txtFiles.setBounds(10, 131, 382, 205);
+
+		btnPostProcess = new Button(shell, SWT.NONE);
+		btnPostProcess.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				postProcessFiles();
+			}
+		});
+		btnPostProcess.setEnabled(false);
+		btnPostProcess.setBounds(10, 371, 382, 25);
+		btnPostProcess.setText("Post process series");
+
+		progressBar = new ProgressBar(shell, SWT.NONE);
+		progressBar.setBounds(10, 402, 382, 17);
 
 		btnSrcSelect.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				LOGGER.debug("btnDstSelect klicked.");
-				DirectoryDialog dlg = new DirectoryDialog(shell);
-
-				// Set the initial filter path according
-				// to anything they've selected or typed in
-				dlg.setFilterPath(txtSrcDir.getText());
-
-				// Change the title bar text
-				dlg.setText("SWT's DirectoryDialog");
-
-				// Customizable message displayed in the dialog
-				dlg.setMessage("Select a directory");
-
-				// Calling open() will open and run the dialog.
-				// It will return the selected directory, or
-				// null if user cancels
-				String dir = dlg.open();
-				if (dir != null) {
-					// find the source dir pattern
-					final String srcDirPattern = useCaseService.findSrcDirPattern(dir);
-
-					// find the final source dir
-					final Path finalSrcDir = useCaseService.createFinalSrcDir(dir);
-
-					try {
-						// finds the matching files
-						final Set<Path> files = useCaseService.findMatchingSrcDirs(finalSrcDir, srcDirPattern);
-						
-						// preview matching files
-						txtFiles.setText(useCaseService.formatFileList(files));
-
-						// get the filename pattern
-						final Set<String> extensions = useCaseService.getFoundVideoExtensions(files);
-						final String filenamePattern = useCaseService.explodeVideoExtensions(extensions);
-						cmbFilePattern.setText(filenamePattern);
-					}
-					catch (UseCaseServiceException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-
-					// Set the text box to the new selection
-					txtSrcDir.setText(finalSrcDir.toString());
-
-					// Set the source dir pattern
-					cmbSrcPattern.setText(srcDirPattern);
-				}
+				selectSource();
 			}
 		});
+
+		btnRefresh.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				modifySource();
+			}
+		});
+
+		// State: Init
+		state(DlgState.Init);
+	}
+
+	private void selectSource() {
+		LOGGER.debug("btnSrcSelect klicked.");
+		DirectoryDialog dlg = new DirectoryDialog(shell);
+
+		// Set the initial filter path according
+		// to anything they've selected or typed in
+		dlg.setFilterPath(txtSrcDir.getText());
+
+		// Change the title bar text
+		dlg.setText("SWT's DirectoryDialog");
+
+		// Customizable message displayed in the dialog
+		dlg.setMessage("Select a directory");
+
+		// Calling open() will open and run the dialog.
+		// It will return the selected directory, or
+		// null if user cancels
+		String dir = dlg.open();
+		if (dir != null) {
+			// find the source dir pattern
+			final String srcDirPattern = useCaseService.findSrcDirPattern(dir);
+
+			// find the final source dir
+			final Path finalSrcDir = useCaseService.createFinalSrcDir(dir);
+
+			try {
+				// finds the matching files
+				filesToProcess = useCaseService.findMatchingSrcDirs(finalSrcDir, srcDirPattern);
+
+				// preview matching files
+				txtFiles.setText(useCaseService.formatFileList(filesToProcess));
+
+				// get the filename pattern
+				final Set<String> extensions = useCaseService.getFoundVideoExtensions(filesToProcess);
+				final String filenamePattern = useCaseService.explodeVideoExtensions(extensions);
+				cmbFilePattern.setText(filenamePattern);
+
+				// Set the text box to the new selection
+				txtSrcDir.setText(finalSrcDir.toString());
+
+				// Set the source dir pattern
+				cmbSrcPattern.setText(srcDirPattern);
+
+				// State: SourceSelected
+				state(DlgState.SourceSelected);
+			}
+			catch (UseCaseServiceException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		}
+	}
+
+	private void modifySource() {
+		// Reset text field
+		txtFiles.setText("");
+		shell.update();
+
+		final Set<String> extensions = useCaseService.implodeVideoExtensions(cmbFilePattern.getText());
+		final Path finalSrcDir = Paths.get(txtSrcDir.getText());
+		try {
+			filesToProcess = useCaseService.findMatchingSrcDirs(finalSrcDir, cmbSrcPattern.getText(), extensions);
+
+			// preview matching files
+			txtFiles.setText(useCaseService.formatFileList(filesToProcess));
+		}
+		catch (UseCaseServiceException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+	}
+
+	private void selectDestination() {
+		LOGGER.debug("btnDstSelect klicked.");
+		DirectoryDialog dlg = new DirectoryDialog(shell);
+
+		// Set the initial filter path according
+		// to anything they've selected or typed in
+		dlg.setFilterPath(txtDstDir.getText());
+
+		// Change the title bar text
+		dlg.setText("SWT's DirectoryDialog");
+
+		// Customizable message displayed in the dialog
+		dlg.setMessage("Select a directory");
+
+		// Calling open() will open and run the dialog.
+		// It will return the selected directory, or
+		// null if user cancels
+		String dir = dlg.open();
+		if (dir != null) {
+			// Set the text box to the new selection
+			txtDstDir.setText(dir);
+
+			// State: DestinationSelected
+			state(DlgState.DestinationSelected);
+		}
+	}
+
+	private void postProcessFiles() {
+		LOGGER.debug("btnPostProcess klicked.");
+
+		// Set progress bar
+		progressBar.setEnabled(true);
+		progressBar.setMinimum(0);
+		progressBar.setMaximum(filesToProcess.size());
+		progressBar.setSelection(0);
+
+		// Init observer
+		final ProgressObservable observable = new ProgressObservable();
+		observable.addObserver(this);
+
+		final Path dstPath = Paths.get(txtDstDir.getText());
+		try {
+			useCaseService.postProcessSeries(filesToProcess, dstPath, PostProcessMode.Copy, observable);
+		}
+		catch (UseCaseServiceException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * 
+	 * @param sourceselected
+	 */
+	private void state(DlgState state) {
+		switch (state) {
+		case Init:
+			txtSrcDir.setEnabled(false);
+			txtSrcDir.setText("");
+			btnSrcSelect.setEnabled(true);
+			cmbSrcPattern.setEnabled(false);
+			cmbSrcPattern.setText("");
+			cmbFilePattern.setEnabled(false);
+			cmbFilePattern.setText("");
+			btnRefresh.setEnabled(false);
+			btnDstSelect.setEnabled(false);
+			txtFiles.setEnabled(false);
+			txtFiles.setText("");
+			txtDstDir.setEnabled(false);
+			txtDstDir.setText("");
+			btnPostProcess.setEnabled(false);
+			progressBar.setEnabled(false);
+			break;
+		case SourceSelected:
+			txtSrcDir.setEnabled(true);
+			btnSrcSelect.setEnabled(true);
+			cmbSrcPattern.setEnabled(true);
+			cmbFilePattern.setEnabled(true);
+			btnRefresh.setEnabled(true);
+			btnDstSelect.setEnabled(true);
+			txtFiles.setEnabled(true);
+			txtDstDir.setEnabled(false);
+			txtDstDir.setText("");
+			btnPostProcess.setEnabled(false);
+			progressBar.setEnabled(false);
+			break;
+		case DestinationSelected:
+			txtSrcDir.setEnabled(true);
+			btnSrcSelect.setEnabled(true);
+			cmbSrcPattern.setEnabled(true);
+			cmbFilePattern.setEnabled(true);
+			btnRefresh.setEnabled(true);
+			btnDstSelect.setEnabled(true);
+			txtFiles.setEnabled(true);
+			txtDstDir.setEnabled(true);
+			btnPostProcess.setEnabled(true);
+			progressBar.setEnabled(false);
+			break;
+		case Done:
+			break;
+		default:
+			throw new IllegalAccessError(String.format("The state '%s' is not supported!", state));
+		}
+		shell.update();
+	}
+
+	@Override
+	public void update(Observable o, Object arg) {
+		// Invoke display thread and update progress bar.
+		if ( display.isDisposed() ) {
+			return;
+		}
+		display.asyncExec(new Runnable() {			
+			@Override
+			public void run() {
+				progressBar.setSelection(progressBar.getSelection() + 1);
+				shell.update();				
+			}
+		});
+		
 	}
 }

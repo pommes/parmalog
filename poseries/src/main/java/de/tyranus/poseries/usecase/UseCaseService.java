@@ -1,7 +1,6 @@
 package de.tyranus.poseries.usecase;
 
-import java.nio.file.*;
-import java.util.List;
+import java.nio.file.Path;
 import java.util.Set;
 
 /**
@@ -44,13 +43,32 @@ public interface UseCaseService {
 	 *             if an IOException while walking through the directories.
 	 */
 	Set<Path> findMatchingSrcDirs(Path finalSrcDir, String srcDirPattern) throws UseCaseServiceException;
-	
+
+	/**
+	 * Returns a list of subdirectories of finalSrcDir that matches the source
+	 * directory pattern.
+	 * 
+	 * @param finalSrcDir
+	 *            the finalized source dir.
+	 * @param srcDirPattern
+	 *            The source directory pattern.
+	 * @param extensions
+	 *            pre set the file extensions to find.
+	 * @return Set of matching files.
+	 * @throws UseCaseServiceException
+	 *             if an IOException while walking through the directories.
+	 */
+	Set<Path> findMatchingSrcDirs(Path finalSrcDir, String srcDirPattern, Set<String> extensions)
+			throws UseCaseServiceException;
+
 	/**
 	 * Formats the found file list.
-	 * @param files the file list
+	 * 
+	 * @param files
+	 *            the file list
 	 * @return the formatted file list.
 	 */
-	String formatFileList(Set<Path> files);	
+	String formatFileList(Set<Path> files);
 
 	/**
 	 * Returns an overlieap of the found video extensions from the list of files
@@ -72,26 +90,31 @@ public interface UseCaseService {
 	 * @return string representation.
 	 */
 	String explodeVideoExtensions(Set<String> extensions);
-	
+
 	/**
 	 * Gets a set of file extensions from its string representation.
-	 * @param extensions the string representation.
+	 * 
+	 * @param extensions
+	 *            the string representation.
 	 * @return the file extensions.
 	 */
 	Set<String> implodeVideoExtensions(String extensions);
 
 	/**
-	 * Post processes the subdirectories of src matching the pattern und
-	 * copy/moves them to dst depending to the mode.
+	 * Post processes the source files and copy/moves them to dst depending to
+	 * the mode.
 	 * 
-	 * @param src
-	 *            source directory to find subdirectories by the pattern
+	 * @param sourceFiles
+	 *            source files to process
 	 * @param dst
-	 *            destination directory to insert files matching the pattern
-	 * @param pattern
+	 *            destination directory to insert source files
 	 * @param mode
+	 *            processing mode
+	 * @param observable
+	 *            the observable that notifies progress changes.
 	 * @throws UseCaseServiceException
 	 */
-	void postProcessSeries(String src, String dst, String pattern, PostProcessMode mode) throws UseCaseServiceException;
+	void postProcessSeries(Set<Path> sourceFiles, Path dst, PostProcessMode mode, ProgressObservable observable)
+			throws UseCaseServiceException;
 
 }

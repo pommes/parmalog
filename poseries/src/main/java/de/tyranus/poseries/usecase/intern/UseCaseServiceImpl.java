@@ -1,5 +1,6 @@
 package de.tyranus.poseries.usecase.intern;
 
+import java.io.IOError;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
@@ -15,11 +16,14 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.tyranus.poseries.usecase.PostProcessMode;
+import de.tyranus.poseries.usecase.ProgressObservable;
 import de.tyranus.poseries.usecase.UseCaseService;
 import de.tyranus.poseries.usecase.UseCaseServiceException;
 
@@ -73,10 +77,43 @@ public final class UseCaseServiceImpl implements UseCaseService {
 	 * ,java.lang.String)
 	 */
 	public Set<Path> findMatchingSrcDirs(Path finalSrcDir, String srcDirPattern) throws UseCaseServiceException {
+		return findMatchingSrcDirs(finalSrcDir, srcDirPattern, null);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * de.tyranus.poseries.usecase.UseCase#findMatchingSrcDirs(java.nio.file.Path
+	 * ,java.lang.String,java.util.Set)
+	 */
+	@Override
+	public Set<Path> findMatchingSrcDirs(Path finalSrcDir, String srcDirPattern, Set<String> extensions)
+			throws UseCaseServiceException {
+
+		// If no extensions are set use '*' as all extension
+		final StringBuilder sbExtensions = new StringBuilder();
+		if (extensions == null || extensions.size() == 0) {
+			sbExtensions.append("*");
+		}
+		else {
+			// Otherwise use the set extensions, for example: *.{ext1,ext2}
+			final String strBegin = "*.{";
+			sbExtensions.append(strBegin);
+			for (String extension : extensions) {
+				if (sbExtensions.length() > strBegin.length()) {
+					sbExtensions.append(",");
+				}
+				sbExtensions.append(extension);
+			}
+			sbExtensions.append("}");
+		}
+
 		final String finalSrsDirStr = finalSrcDir.toString().replace("\\", "\\\\");
-		final PathMatcher pathMatcher = FileSystems.getDefault().getPathMatcher(String.format("glob:%s/%s/*",
+		final PathMatcher pathMatcher = FileSystems.getDefault().getPathMatcher(String.format("glob:%s/%s/%s",
 				finalSrsDirStr,
-				srcDirPattern));
+				srcDirPattern,
+				sbExtensions.toString()));
 		final Set<Path> matchingDirs = new HashSet<Path>();
 
 		try {
@@ -199,14 +236,56 @@ public final class UseCaseServiceImpl implements UseCaseService {
 	 * (non-Javadoc)
 	 * 
 	 * @see
-	 * de.tyranus.poseries.usecase.UseCase#postProcessSeries(java.lang.String,
-	 * java.lang.String, java.lang.String,
+	 * de.tyranus.poseries.usecase.UseCase#postProcessSeries(java.util.Set,
+	 * java.util.Path,
 	 * de.tyranus.poseries.usecase.PostProcessMode)
 	 */
-	public void postProcessSeries(String src, String dst, String pattern, PostProcessMode mode)
-			throws UseCaseServiceException {
-		// TODO Auto-generated method stub
+	public void postProcessSeries(final Set<Path> sourceFiles,
+			final Path dstPath,
+			final PostProcessMode mode,
+			final ProgressObservable observable) throws UseCaseServiceException {
+		// sort files
+		final List<Path> orderedFiles = new ArrayList<>(sourceFiles);
+		Collections.sort(orderedFiles);
 
+		// process files parallel
+		// Runtime.getRuntime().availableProcessors()
+		final ExecutorService exec = Executors.newFixedThreadPool(1);
+		try {
+			for (final Path src : orderedFiles) {
+				exec.submit(new Runnable() {
+					@Override
+					public void run() {
+						// target filename
+						final Path dst = Paths.get(dstPath + "/" + src.getName(src.getNameCount() - 1));
+						LOGGER.debug("processing file to: {}", dst.toString());
+						try {
+							switch (mode) {
+							case Copy:
+								Files.copy(src, dst);
+								break;
+							case Move:
+								Files.move(src, dst);
+								break;
+							default:
+								throw new IllegalAccessError(String.format("The mode '%s' is not supported!", mode));
+							}
+						}
+						catch (IOException e) {
+							throw new IOError(e);
+						}
+
+						observable.updateProgress();
+					}
+				});
+
+			}
+		}
+		catch (IOError e) {
+			throw UseCaseServiceException.createCopyMoveError((IOException) e.getCause(), mode);
+		}
+		finally {
+			exec.shutdown();
+		}
 	}
-
 }

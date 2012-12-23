@@ -12,4 +12,8 @@ public class UseCaseServiceException extends Exception {
 	public final static UseCaseServiceException createReadError(IOException cause) {
 		return new UseCaseServiceException(String.format("Error on reading file: %s", cause.getMessage()));
 	}
+
+	public static UseCaseServiceException createCopyMoveError(IOException e, PostProcessMode mode) {
+		return new UseCaseServiceException(String.format("Error during operation '%s': %s", mode, e.getMessage()));
+	}
 }
