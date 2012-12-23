@@ -1,6 +1,10 @@
 package de.tyranus.poseries.gui;
 
+import java.nio.file.Path;
+import java.util.Set;
+
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseTrackAdapter;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -9,22 +13,18 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.ExpandBar;
+import org.eclipse.swt.widgets.ExpandItem;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.wb.swt.SWTResourceManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import java.nio.file.*;
-import java.util.List;
-import java.util.Set;
 
 import de.tyranus.poseries.usecase.UseCaseService;
 import de.tyranus.poseries.usecase.UseCaseServiceException;
-import org.eclipse.swt.widgets.ExpandBar;
-import org.eclipse.swt.widgets.ExpandItem;
-import org.eclipse.swt.custom.StyledText;
-import org.eclipse.wb.swt.SWTResourceManager;
 
 public class MainWindow {
 	private static final Logger LOGGER = LoggerFactory.getLogger(MainWindow.class);
