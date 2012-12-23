@@ -25,7 +25,7 @@ import de.tyranus.poseries.usecase.UseCaseServiceException;
 @ContextConfiguration(classes = { UseCaseServiceTestConfig.class }, loader = AnnotationConfigContextLoader.class)
 public class UseCaseServiceTest {
 	private static final Logger LOGGER = LoggerFactory.getLogger(UseCaseServiceTest.class);
-	public final static String DIR_REL_SRC_1 = "target/classes/data/1/src";
+	public final static String DIR_REL_SRC_1 = "src/test/resources/data/1/src";
 	public final static String DIR_REL_SRC_1_S05E01 = DIR_REL_SRC_1 + "/abc-testvid-s05e01";
 
 	@Autowired
