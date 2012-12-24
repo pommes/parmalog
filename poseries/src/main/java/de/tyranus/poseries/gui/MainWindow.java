@@ -45,7 +45,7 @@ public class MainWindow implements Observer {
 	private Label lblDestinationDirecory;
 	private Button btnDstSelect;
 	private Combo cmbFilePattern;
-	private Label lblNewLabel;
+	private Label lblFileExtensions;
 	private Button btnRefresh;
 	private Combo cmbSrcPattern;
 	private Label lblSourceDirectoryPattern;
@@ -91,17 +91,18 @@ public class MainWindow implements Observer {
 	protected void createContents() {
 		shell = new Shell();
 		shell.setSize(417, 464);
-		shell.setText("PoSeries - Series Post Download");
+		shell.setText(Messages.MainWindow_shell_text);
 
 		cmbFilePattern = new Combo(shell, SWT.NONE);
 		cmbFilePattern.setEnabled(false);
 		cmbFilePattern.setItems(new String[] { "*avi,*mp4" });
 		cmbFilePattern.setBounds(145, 68, 159, 23);
 
-		lblNewLabel = new Label(shell, SWT.NONE);
-		lblNewLabel.setAlignment(SWT.RIGHT);
-		lblNewLabel.setBounds(10, 71, 129, 15);
-		lblNewLabel.setText("Filename pattern");
+		lblFileExtensions = new Label(shell, SWT.NONE);
+		lblFileExtensions.setToolTipText(Messages.MainWindow_lblFileExtensions_toolTipText);
+		lblFileExtensions.setAlignment(SWT.RIGHT);
+		lblFileExtensions.setBounds(10, 71, 129, 15);
+		lblFileExtensions.setText(Messages.MainWindow_lblFileExtensions_text);
 
 		txtSrcDir = new Text(shell, SWT.BORDER);
 		txtSrcDir.addMouseTrackListener(new MouseTrackAdapter() {
@@ -114,12 +115,13 @@ public class MainWindow implements Observer {
 
 		btnSrcSelect = new Button(shell, SWT.NONE);
 		btnSrcSelect.setBounds(310, 10, 82, 25);
-		btnSrcSelect.setText("Chose...");
+		btnSrcSelect.setText(Messages.MainWindow_btnSrcSelect_text);
 
 		lblSourceDirectory = new Label(shell, SWT.NONE);
+		lblSourceDirectory.setToolTipText(Messages.MainWindow_lblSourceDirectory_toolTipText);
 		lblSourceDirectory.setAlignment(SWT.RIGHT);
 		lblSourceDirectory.setBounds(10, 15, 129, 15);
-		lblSourceDirectory.setText("Source directory");
+		lblSourceDirectory.setText(Messages.MainWindow_lblSourceDirectory_text);
 
 		txtDstDir = new Text(shell, SWT.BORDER);
 		txtDstDir.setEnabled(false);
@@ -134,7 +136,7 @@ public class MainWindow implements Observer {
 		lblDestinationDirecory = new Label(shell, SWT.NONE);
 		lblDestinationDirecory.setAlignment(SWT.RIGHT);
 		lblDestinationDirecory.setBounds(10, 347, 129, 15);
-		lblDestinationDirecory.setText("Destination direcory");
+		lblDestinationDirecory.setText(Messages.MainWindow_lblDestinationDirecory_text);
 
 		btnDstSelect = new Button(shell, SWT.NONE);
 		btnDstSelect.setEnabled(false);
@@ -145,12 +147,12 @@ public class MainWindow implements Observer {
 			}
 		});
 		btnDstSelect.setBounds(310, 342, 82, 25);
-		btnDstSelect.setText("Chose...");
+		btnDstSelect.setText(Messages.MainWindow_btnDstSelect_text);
 
 		btnRefresh = new Button(shell, SWT.NONE);
 		btnRefresh.setEnabled(false);
 		btnRefresh.setBounds(10, 100, 382, 25);
-		btnRefresh.setText("Refresh");
+		btnRefresh.setText(Messages.MainWindow_btnRefresh_text);
 
 		cmbSrcPattern = new Combo(shell, SWT.NONE);
 		cmbSrcPattern.setEnabled(false);
@@ -159,7 +161,7 @@ public class MainWindow implements Observer {
 		lblSourceDirectoryPattern = new Label(shell, SWT.NONE);
 		lblSourceDirectoryPattern.setAlignment(SWT.RIGHT);
 		lblSourceDirectoryPattern.setBounds(10, 42, 129, 15);
-		lblSourceDirectoryPattern.setText("Source directory pattern");
+		lblSourceDirectoryPattern.setText(Messages.MainWindow_lblSourceDirectoryPattern_text);
 
 		txtFiles = new StyledText(shell, SWT.BORDER | SWT.V_SCROLL);
 		txtFiles.setFont(SWTResourceManager.getFont("Segoe UI", 10, SWT.NORMAL));
@@ -176,7 +178,7 @@ public class MainWindow implements Observer {
 		});
 		btnPostProcess.setEnabled(false);
 		btnPostProcess.setBounds(10, 371, 382, 25);
-		btnPostProcess.setText("Post process series");
+		btnPostProcess.setText(Messages.MainWindow_btnPostProcess_text);
 
 		progressBar = new ProgressBar(shell, SWT.NONE);
 		progressBar.setBounds(10, 402, 382, 17);
@@ -201,6 +203,7 @@ public class MainWindow implements Observer {
 
 	private void selectSource() {
 		LOGGER.debug("btnSrcSelect klicked.");
+		state(DlgState.Loading);
 		DirectoryDialog dlg = new DirectoryDialog(shell);
 
 		// Set the initial filter path according
@@ -217,7 +220,11 @@ public class MainWindow implements Observer {
 		// It will return the selected directory, or
 		// null if user cancels
 		String dir = dlg.open();
-		if (dir != null) {
+		if (dir == null) {
+			// Cancel was clicked
+			state(DlgState.Init);
+		}
+		else {
 			// find the source dir pattern
 			final String srcDirPattern = useCaseService.findSrcDirPattern(dir);
 
@@ -248,6 +255,7 @@ public class MainWindow implements Observer {
 			catch (UseCaseServiceException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
+				state(DlgState.Init);
 			}
 		}
 	}
@@ -272,6 +280,7 @@ public class MainWindow implements Observer {
 	}
 
 	private void selectDestination() {
+		state(DlgState.Loading);
 		LOGGER.debug("btnDstSelect klicked.");
 		DirectoryDialog dlg = new DirectoryDialog(shell);
 
@@ -289,7 +298,11 @@ public class MainWindow implements Observer {
 		// It will return the selected directory, or
 		// null if user cancels
 		String dir = dlg.open();
-		if (dir != null) {
+		if (dir == null) {
+			// Cancel case
+			state(DlgState.SourceSelected);
+		}
+		else {
 			// Set the text box to the new selection
 			txtDstDir.setText(dir);
 
@@ -299,6 +312,7 @@ public class MainWindow implements Observer {
 	}
 
 	private void postProcessFiles() {
+		state(DlgState.Loading);
 		LOGGER.debug("btnPostProcess klicked.");
 
 		// Set progress bar
@@ -314,10 +328,12 @@ public class MainWindow implements Observer {
 		final Path dstPath = Paths.get(txtDstDir.getText());
 		try {
 			useCaseService.postProcessSeries(filesToProcess, dstPath, PostProcessMode.Copy, observable);
+			state(DlgState.Done);
 		}
 		catch (UseCaseServiceException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			state(DlgState.DestinationSelected);
 		}
 	}
 
@@ -326,7 +342,7 @@ public class MainWindow implements Observer {
 	 * @param sourceselected
 	 */
 	private void state(DlgState state) {
-		switch (state) {
+		switch (state) {		
 		case Init:
 			txtSrcDir.setEnabled(false);
 			txtSrcDir.setText("");
@@ -344,6 +360,18 @@ public class MainWindow implements Observer {
 			btnPostProcess.setEnabled(false);
 			progressBar.setEnabled(false);
 			break;
+		case Loading:
+			txtSrcDir.setEnabled(false);
+			btnSrcSelect.setEnabled(false);
+			cmbSrcPattern.setEnabled(false);
+			cmbFilePattern.setEnabled(false);
+			btnRefresh.setEnabled(false);
+			btnDstSelect.setEnabled(false);
+			txtFiles.setEnabled(false);
+			txtDstDir.setEnabled(false);
+			btnPostProcess.setEnabled(false);
+			progressBar.setEnabled(false);
+			break;			
 		case SourceSelected:
 			txtSrcDir.setEnabled(true);
 			btnSrcSelect.setEnabled(true);
@@ -370,6 +398,16 @@ public class MainWindow implements Observer {
 			progressBar.setEnabled(false);
 			break;
 		case Done:
+			txtSrcDir.setEnabled(true);
+			btnSrcSelect.setEnabled(true);
+			cmbSrcPattern.setEnabled(true);
+			cmbFilePattern.setEnabled(true);
+			btnRefresh.setEnabled(true);
+			btnDstSelect.setEnabled(true);
+			txtFiles.setEnabled(true);
+			txtDstDir.setEnabled(true);
+			btnPostProcess.setEnabled(true);
+			progressBar.setEnabled(false);
 			break;
 		default:
 			throw new IllegalAccessError(String.format("The state '%s' is not supported!", state));
