@@ -1,0 +1,7 @@
+/target
+/dev_complete.log
+/dev_error.log
+/.settings
+/.classpath
+/.project
+/bin
